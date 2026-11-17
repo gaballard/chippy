@@ -18,6 +18,8 @@ pub struct DebugPanel<'a> {
     pub padding: u32,
     pub foreground_color: Color,
     pub background_color: Color,
+    pub fps: u32,
+    pub cycles_per_frame: u32,
 }
 
 impl<'a> DebugPanel<'a> {
@@ -29,11 +31,11 @@ impl<'a> DebugPanel<'a> {
         height: u32,
         padding: u32,
         color_palette: usize,
-        video_scale: u32,
+        zoom_level: u32,
         font: &'a Font<'a, 'static>,
     ) -> Self {
-        let scaled_width = width * video_scale;
-        let scaled_height = height * video_scale;
+        let scaled_width = width * zoom_level;
+        let scaled_height = height * zoom_level;
 
         let video_subsystem = platform
             .get_sdl_context()
@@ -65,6 +67,8 @@ impl<'a> DebugPanel<'a> {
             padding,
             foreground_color,
             background_color,
+            fps: 0,
+            cycles_per_frame: 0,
         }
     }
 
@@ -143,16 +147,34 @@ impl<'a> DebugPanel<'a> {
             (anchor_x as u32 + self.padding * 2 + (width / 2) * col) as usize,
             ((anchor_y + self.padding as i32 + self.font.height() * row) as f32 * 1.5) as usize,
         );
+        row = row.wrapping_add(1);
 
         // V registers
         for r in 0..16 {
-            row = row.wrapping_add(1);
             self.draw_text(
                 &format!("V{:X}: {}", r, cpu.v.read(r)).to_string(),
                 (anchor_x as u32 + self.padding * 2 + (width / 2) * col) as usize,
                 ((anchor_y + self.padding as i32 + self.font.height() * row) as f32 * 1.5) as usize,
             );
+            row = row.wrapping_add(1);
         }
+
+        // FPS
+        self.draw_text(
+            &format!("FPS: {}", self.fps),
+            (anchor_x as u32 + self.padding * 2 + (width / 2) * col) as usize,
+            ((anchor_y + self.padding as i32 + self.font.height() * row) as f32 * 1.5) as usize,
+        );
+        row = row.wrapping_add(1);
+
+        // Cycles/Frame
+        self.draw_text(
+            &format!("Cyc/Fr: {}", self.cycles_per_frame),
+            (anchor_x as u32 + self.padding * 2 + (width / 2) * col) as usize,
+            ((anchor_y + self.padding as i32 + self.font.height() * row) as f32 * 1.5) as usize,
+        );
+
+        // row = row.wrapping_add(1);
 
         self.canvas.present();
     }

@@ -5,6 +5,7 @@ use crate::{chip8::ScrollDir, chippy::Chippy, constants};
 ///
 /// Program Actions
 ///
+#[derive(PartialEq)]
 pub enum Actions {
     Quit,
     Reset,
@@ -16,8 +17,8 @@ pub enum Actions {
     ToggleHiresMode,
     ToggleCrtFade,
     SetCrtFadeSpeed(u32),
-    IncVideoScale,
-    DecVideoScale,
+    IncZoomLevel,
+    DecZoomLevel,
     ScrollScreen(ScrollDir, usize),
 }
 
@@ -54,6 +55,7 @@ impl Actions {
     }
 
     pub fn handle_set_crt_fade_rate_action(chippy: &mut Chippy, fade_rate: u32) {
+        println!("Setting CRT fade rate to: {fade_rate}");
         chippy.state.crt_fade_rate = fade_rate;
     }
 
@@ -67,6 +69,10 @@ impl Actions {
 
     pub fn handle_toggle_hires_mode(chippy: &mut Chippy) {
         let hires_mode = !chippy.devices.cpu.vram.hires_mode;
+        debug!(
+            "Setting display mode to {} mode",
+            if hires_mode { "hires" } else { "lores" }
+        );
 
         // SCHIP-1.x defines clock speed changes on lo/hi res modes
         let clock_speed = if chippy.settings.instruction_set.is_schip() {
@@ -84,23 +90,21 @@ impl Actions {
         }
 
         chippy.devices.cpu.vram.hires_mode = hires_mode;
-        chippy.devices.display.set_hires_mode(hires_mode);
+        // chippy.devices.display.set_hires_mode(hires_mode);
     }
 
-    pub fn handle_inc_video_scale(chippy: &mut Chippy) {
-        chippy.devices.display.video_scale = chippy.devices.display.video_scale.saturating_add(1);
-        chippy
-            .devices
-            .display
-            .set_hires_mode(chippy.devices.display.get_hires_mode());
+    pub fn handle_inc_zoom_level(chippy: &mut Chippy) {
+        chippy.devices.display.zoom_level = chippy.devices.display.zoom_level.saturating_add(1);
+        // chippy.devices.cpu.vram.hires_mode = chippy.devices.cpu.vram.hires_mode;
     }
 
-    pub fn handle_dec_video_scale(chippy: &mut Chippy) {
-        chippy.devices.display.video_scale = chippy.devices.display.video_scale.saturating_sub(1);
-        chippy
-            .devices
-            .display
-            .set_hires_mode(chippy.devices.display.get_hires_mode());
+    pub fn handle_dec_zoom_level(chippy: &mut Chippy) {
+        chippy.devices.display.zoom_level = chippy.devices.display.zoom_level.saturating_sub(1);
+        // chippy.devices.cpu.vram.hires_mode = chippy.devices.cpu.vram.hires_mode;
+        // chippy
+        //     .devices
+        //     .display
+        //     .set_hires_mode(chippy.devices.display.get_hires_mode());
     }
 
     pub fn handle_scroll(chippy: &mut Chippy, dir: ScrollDir, amount: usize) {

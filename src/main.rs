@@ -39,14 +39,7 @@ fn main() {
 
     println!("There's my Chippy.");
 
-    // Interpreter timing
-    let mut prev_frame_tick: u32;
-    let mut should_execute: bool;
-
-    // Load program
-    chippy.state.rom_filename = args[1].to_owned();
-    chippy.devices.tape.read(&chippy.state.rom_filename);
-    chippy.devices.cpu.load_program(&chippy.devices.tape.data);
+    chippy.load_program(args[1].to_owned());
 
     println!(
         "Running program using the {} instruction set.",
@@ -55,13 +48,7 @@ fn main() {
 
     // Main loop
     'emulate: loop {
-        prev_frame_tick = chippy.resources.frame_timer.ticks();
-        should_execute = false;
-
-        // Clear frame buffer
-        chippy.devices.display.reset();
-        chippy.devices.display.debug_panel.reset();
-        chippy.devices.cpu.vram.vram_changed = false;
+        chippy.start_frame();
 
         // Check inputs
         match chippy.devices.keypad.read_host_keypad(&chippy.settings) {
@@ -69,7 +56,7 @@ fn main() {
             Actions::Quit => break 'emulate,
             Actions::Reset => Actions::handle_reset_action(&mut chippy),
             Actions::ToggleDebugMode => Actions::handle_toggle_debug_mode_action(&mut chippy),
-            Actions::Step => should_execute = true,
+            Actions::Step => chippy.state.should_execute = true,
             Actions::ToggleDebugPanel => Actions::handle_toggle_debug_panel_action(&mut chippy),
             Actions::CycleColorPalette => Actions::handle_cycle_color_palette_action(&mut chippy),
             Actions::ToggleCrtFade => Actions::handle_toggle_crt_fade_action(&mut chippy),
@@ -77,21 +64,17 @@ fn main() {
             Actions::SetCrtFadeSpeed(fade_rate) => {
                 Actions::handle_set_crt_fade_rate_action(&mut chippy, fade_rate)
             }
-            Actions::IncVideoScale => Actions::handle_inc_video_scale(&mut chippy),
-            Actions::DecVideoScale => Actions::handle_dec_video_scale(&mut chippy),
+            Actions::IncZoomLevel => Actions::handle_inc_zoom_level(&mut chippy),
+            Actions::DecZoomLevel => Actions::handle_dec_zoom_level(&mut chippy),
             Actions::ScrollScreen(dir, amount) => Actions::handle_scroll(&mut chippy, dir, amount),
         }
 
-        // Refill input buffer
-        chippy
-            .devices
-            .keypad
-            .read_keypad(chippy.devices.cpu.keys.get_buffer());
+        chippy.refresh_input_buffer();
 
         // Handle debug mode
         if chippy.state.debug_mode {
-            if !should_execute {
-                draw_screen(&mut chippy);
+            if !chippy.state.should_execute {
+                chippy.debug_step();
                 continue;
             }
             debug!("Executing frame {}...", chippy.devices.cpu.cycle);
@@ -104,44 +87,14 @@ fn main() {
             break 'emulate;
         }
 
-        // Play audio
-        if chippy.devices.cpu.sound_timer > 0 {
-            chippy.devices.audio.start_beep();
-        } else {
-            chippy.devices.audio.stop_beep()
-        }
+        chippy.play_audio();
 
-        // Switch video modes if needed
-        if chippy.devices.cpu.vram.hires_mode != chippy.devices.display.get_hires_mode() {
-            chippy
-                .devices
-                .display
-                .set_hires_mode(chippy.devices.cpu.vram.hires_mode);
-        }
+        let dt = chippy.resources.frame_timer.ticks() - chippy.state.prev_frame_tick_ms;
 
-        // Draw screen
-        draw_screen(&mut chippy);
-
-        let dt = chippy.resources.frame_timer.ticks() - prev_frame_tick;
-        if dt < chippy.state.get_target_timestep() {
-            std::thread::sleep(Duration::from_millis(
-                (chippy.state.get_target_timestep() - dt).into(),
-            ));
-        }
+        chippy.refresh_screen(dt);
+        chippy.refresh_counters(dt);
+        chippy.end_frame(dt);
     }
 
     println!("Thanks for playing!");
-}
-
-fn draw_screen(chippy: &mut Chippy) {
-    chippy
-        .devices
-        .display
-        .debug_panel
-        .update(&chippy.devices.cpu);
-    chippy.devices.display.update(
-        &mut chippy.devices.cpu.vram,
-        chippy.state.crt_fade,
-        chippy.state.crt_fade_rate as u8,
-    );
 }

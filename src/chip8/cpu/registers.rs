@@ -3,15 +3,13 @@
 ///
 #[derive(Debug)]
 pub struct Registers {
-    data: Box<[u8; 16]>,
+    data: [u8; 16],
 }
 
 impl Registers {
     #[inline]
     pub fn new() -> Self {
-        Registers {
-            data: Box::new([0; 16]),
-        }
+        Registers { data: [0; 16] }
     }
 
     #[inline]
@@ -26,6 +24,6 @@ impl Registers {
 
     #[inline]
     pub fn clear(&mut self) {
-        self.data = Box::new([0; 16]);
+        self.data = [0; 16];
     }
 }

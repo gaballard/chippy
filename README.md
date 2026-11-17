@@ -96,13 +96,17 @@ The following is a list of games that have been tested with this interpreter:
 | 8CE Attorney - Disc 2 | 2016  | SystemLogoff      | ✅     | Haven't tested full game            |
 | 8CE Attorney - Disc 3 | 2016  | SystemLogoff      | ✅     | Haven't tested full game            |
 | Airplane              | ?     | Unknown           | ✅     |                                     |
-| Br8kout               | 2014  | SharpenedSpoon    | ❌     | Stuck in draw loop                  |
+| Br8kout               | 2014  | SharpenedSpoon    | ✅     |                                     |
 | Breakout              | 1979  | Carmelo Cortez    | ✅     |                                     |
+| Cave                  | ?     | Unknown           | ✅     |                                     |
 | Coin Flipping         | 1978  | Carmelo Cortez    | ✅     |                                     |
 | Craps                 | 1978  | Carmelo Cortez    | ✅     |                                     |
+| Figures               | ?     | Unknown           | ✅     |                                     |
+| Filter                | ?     | Unknown           | ✅     |                                     |
 | Flight Runner         | 2014  | TodPunk           | ❌     | Plays for a while then freezes      |
 | Hi-Lo                 | 1978  | Jef Winsor        | ✅     |                                     |
 | Kaleidoscope          | 1978  | Joseph Weisbecker | ❌     | Starts, but nothing else happens    |
+| Landing               | ?     | Unknown           | ✅     |                                     |
 | Lunar Lander          | 1979  | Udo Pernisz       | ✅     |                                     |
 | Mastermind FourRow    | 1978  | Robert Lindley    | ✅     |                                     |
 | Nim                   | 1978  | Carmelo Cortez    | ✅     |                                     |
@@ -111,7 +115,10 @@ The following is a list of games that have been tested with this interpreter:
 | Pong (1-player)       | 1990? | Paul Vervalin?    | ✅     | Paul Vervalin's Pong w/CPU opponent |
 | RPS                   | 2015  | SystemLogoff      | ❌     | Can't get past title screen         |
 | Snek                  | 2021  | John Earnest      | ✅     |                                     |
+| Soccer                | ?     | Unknown           | ✅     |                                     |
+| Space Flight          | ?     | Unknown           | ✅     |                                     |
 | Tetris                | 1991  | Fran Dachille     | ✅     |                                     |
+| Tron                  | ?     | Unknown           | ✅     |                                     |
 
 ## Test Suites
 

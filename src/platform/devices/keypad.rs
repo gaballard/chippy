@@ -91,12 +91,12 @@ impl Keypad {
                 Event::KeyDown {
                     keycode: Some(Keycode::LeftBracket),
                     ..
-                } => return Actions::DecVideoScale,
+                } => return Actions::DecZoomLevel,
 
                 Event::KeyDown {
                     keycode: Some(Keycode::RightBracket),
                     ..
-                } => return Actions::IncVideoScale,
+                } => return Actions::IncZoomLevel,
 
                 // Set hires mode
                 Event::KeyDown {

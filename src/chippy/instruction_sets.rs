@@ -1,9 +1,10 @@
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum InstructionSet {
     _Chip8,
     Chip8D6800,
     _Chip8E,
     _Chip8I,
+    Chip8III,
     _Chip8X,
     _Chip10,
     Chip48,
@@ -18,16 +19,17 @@ pub enum InstructionSet {
 impl InstructionSet {
     pub fn from_title(title: &str) -> Self {
         match title {
-            "CHIP-8" => InstructionSet::_Chip8,
-            "CHIP-8-D6800" => InstructionSet::Chip8D6800,
+            "CHIP-8" => InstructionSet::_Chip8,           // COSMAC VIP (1977)
+            "CHIP-8-D6800" => InstructionSet::Chip8D6800, // DREAM-6800
             "CHIP-8E" => InstructionSet::_Chip8E,
             "CHIP-8I" => InstructionSet::_Chip8I,
+            "CHIP-8III" => InstructionSet::Chip8III,
             "CHIP-8X" => InstructionSet::_Chip8X,
             "CHIP-10" => InstructionSet::_Chip10,
-            "CHIP-48" => InstructionSet::Chip48,
+            "CHIP-48" => InstructionSet::Chip48, // HP-48 (1990)
             "MEGACHIP" => InstructionSet::_Megachip,
-            "SCHIP-1.0" => InstructionSet::Schip1point0,
-            "SCHIP-1.1" => InstructionSet::Schip1point1,
+            "SCHIP-1.0" => InstructionSet::Schip1point0, // HP-48 (1991)
+            "SCHIP-1.1" => InstructionSet::Schip1point1, // HP-48 (1991)
             "SCHIP-MODERN" => InstructionSet::SchipModern,
             "SCHIPC" => InstructionSet::_SchipC,
             "XO-CHIP" => InstructionSet::_XoChip,
@@ -41,6 +43,7 @@ impl InstructionSet {
             InstructionSet::Chip8D6800 => "CHIP-8-D6800",
             InstructionSet::_Chip8E => "CHIP-8E",
             InstructionSet::_Chip8I => "CHIP-8I",
+            InstructionSet::Chip8III => "CHIP-8III",
             InstructionSet::_Chip8X => "CHIP-8X",
             InstructionSet::_Chip10 => "CHIP-10",
             InstructionSet::Chip48 => "CHIP-48",
