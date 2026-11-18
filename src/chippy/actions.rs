@@ -1,10 +1,9 @@
-use log::debug;
-
 use crate::{chip8::ScrollDir, chippy::Chippy, constants};
 
 ///
 /// Program Actions
 ///
+#[derive(PartialEq)]
 pub enum Actions {
     Quit,
     Reset,
@@ -13,11 +12,10 @@ pub enum Actions {
     ToggleDebugPanel,
     CycleColorPalette,
     Step,
-    ToggleHiresMode,
     ToggleCrtFade,
     SetCrtFadeSpeed(u32),
-    IncVideoScale,
-    DecVideoScale,
+    IncZoomLevel,
+    DecZoomLevel,
     ScrollScreen(ScrollDir, usize),
 }
 
@@ -54,6 +52,7 @@ impl Actions {
     }
 
     pub fn handle_set_crt_fade_rate_action(chippy: &mut Chippy, fade_rate: u32) {
+        println!("Setting CRT fade rate to: {fade_rate}");
         chippy.state.crt_fade_rate = fade_rate;
     }
 
@@ -65,45 +64,30 @@ impl Actions {
         chippy.state.crt_fade = !chippy.state.crt_fade
     }
 
-    pub fn handle_toggle_hires_mode(chippy: &mut Chippy) {
-        let hires_mode = !chippy.devices.cpu.vram.hires_mode;
-
-        // SCHIP-1.x defines clock speed changes on lo/hi res modes
-        let clock_speed = if chippy.settings.instruction_set.is_schip() {
-            if chippy.devices.cpu.vram.hires_mode {
-                chippy.settings.schip_hires_clock_speed_hz
-            } else {
-                chippy.settings.schip_lores_clock_speed_hz
-            }
+    pub fn handle_inc_zoom_level(chippy: &mut Chippy) {
+        let new_zoom = chippy.devices.display.zoom_level.saturating_add(1);
+        chippy.devices.display.zoom_level = if new_zoom <= constants::MAX_ZOOM_LEVEL {
+            new_zoom
         } else {
-            chippy.settings.default_clock_speed_hz
+            constants::MAX_ZOOM_LEVEL
         };
-        if clock_speed != chippy.state.clock_speed {
-            debug!("Setting clock speed to: {} hz", clock_speed);
-            chippy.state.set_clock_speed(clock_speed);
-        }
-
-        chippy.devices.cpu.vram.hires_mode = hires_mode;
-        chippy.devices.display.set_hires_mode(hires_mode);
     }
 
-    pub fn handle_inc_video_scale(chippy: &mut Chippy) {
-        chippy.devices.display.video_scale = chippy.devices.display.video_scale.saturating_add(1);
-        chippy
-            .devices
-            .display
-            .set_hires_mode(chippy.devices.display.get_hires_mode());
-    }
-
-    pub fn handle_dec_video_scale(chippy: &mut Chippy) {
-        chippy.devices.display.video_scale = chippy.devices.display.video_scale.saturating_sub(1);
-        chippy
-            .devices
-            .display
-            .set_hires_mode(chippy.devices.display.get_hires_mode());
+    pub fn handle_dec_zoom_level(chippy: &mut Chippy) {
+        let new_zoom = chippy.devices.display.zoom_level.saturating_sub(1);
+        chippy.devices.display.zoom_level = if new_zoom >= constants::MIN_ZOOM_LEVEL {
+            new_zoom
+        } else {
+            constants::MIN_ZOOM_LEVEL
+        };
     }
 
     pub fn handle_scroll(chippy: &mut Chippy, dir: ScrollDir, amount: usize) {
-        chippy.devices.cpu.vram.scroll(dir, amount);
+        match dir {
+            ScrollDir::Down => chippy.devices.cpu.scd(amount as u8),
+            ScrollDir::Up => chippy.devices.cpu.scu(amount as u8),
+            ScrollDir::Right => chippy.devices.cpu.scr(),
+            ScrollDir::Left => chippy.devices.cpu.scl(),
+        }
     }
 }

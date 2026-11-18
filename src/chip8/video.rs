@@ -1,16 +1,20 @@
 pub mod sprite;
 
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    mem::{replace, swap},
+};
 
 use log::debug;
 
 use crate::{
     chip8::sprite::{Sprite, SpriteKey},
+    chippy::InstructionSet,
     constants,
-    utils::read_bit_from_byte,
+    utils::{get_display_height, get_display_width, read_bit_from_byte},
 };
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ScrollDir {
     Up,
     Down,
@@ -24,6 +28,7 @@ pub enum ScrollDir {
 #[derive(Debug)]
 #[must_use]
 pub struct VideoMemory {
+    instruction_set: InstructionSet,
     pub hires_mode: bool,
     pub vram_changed: bool,
     data: [[u8; constants::HIRES_SCREEN_WIDTH]; constants::HIRES_SCREEN_HEIGHT],
@@ -32,8 +37,9 @@ pub struct VideoMemory {
 }
 
 impl VideoMemory {
-    pub fn new() -> Self {
+    pub fn new(instruction_set: InstructionSet) -> Self {
         Self {
+            instruction_set,
             hires_mode: false,
             vram_changed: false,
             data: [[0; constants::HIRES_SCREEN_WIDTH]; constants::HIRES_SCREEN_HEIGHT],
@@ -46,62 +52,42 @@ impl VideoMemory {
     /// Memory
     ///
 
-    pub fn read(&self, x: usize, y: usize) -> &u8 {
-        if self.hires_mode {
-            &self.data[y][x]
+    fn get_data_pos(&self, x: usize, y: usize) -> (usize, usize) {
+        let display_width = get_display_width(&self.instruction_set);
+        let display_height = get_display_height(&self.instruction_set);
+
+        let dx = if x >= display_width as usize {
+            display_width as usize - 1
         } else {
-            &self.data[if y > constants::LORES_SCREEN_HEIGHT {
-                constants::LORES_SCREEN_HEIGHT
-            } else {
-                y
-            }][if x > constants::LORES_SCREEN_WIDTH {
-                constants::LORES_SCREEN_WIDTH
-            } else {
-                x
-            }]
-        }
+            x
+        };
+
+        let dy = if y >= display_height as usize {
+            display_height as usize - 1
+        } else {
+            y
+        };
+
+        (dx, dy)
+    }
+
+    pub fn read(&self, x: usize, y: usize) -> &u8 {
+        let (dx, dy) = self.get_data_pos(x, y);
+        &self.data[dy][dx]
     }
 
     pub fn write(&mut self, x: usize, y: usize, value: u8) {
-        if self.hires_mode {
-            self.data[y][x] = value;
-        } else {
-            self.data[if y > constants::LORES_SCREEN_HEIGHT {
-                constants::LORES_SCREEN_HEIGHT
-            } else {
-                y
-            }][if x > constants::LORES_SCREEN_WIDTH {
-                constants::LORES_SCREEN_WIDTH
-            } else {
-                x
-            }] = value;
-        }
+        let (dx, dy) = self.get_data_pos(x, y);
+        let _ = replace(&mut self.data[dy][dx], value);
         self.vram_changed = true;
     }
 
     pub fn clear(&mut self) {
-        self.data = [[0; constants::HIRES_SCREEN_WIDTH]; constants::HIRES_SCREEN_HEIGHT];
+        let _ = replace(
+            &mut self.data,
+            [[0; constants::HIRES_SCREEN_WIDTH]; constants::HIRES_SCREEN_HEIGHT],
+        );
         self.vram_changed = true;
-    }
-
-    ///
-    /// Screen
-    ///
-
-    pub fn get_screen_width(&self) -> usize {
-        if self.hires_mode {
-            constants::HIRES_SCREEN_WIDTH
-        } else {
-            constants::LORES_SCREEN_WIDTH
-        }
-    }
-
-    pub fn get_screen_height(&self) -> usize {
-        if self.hires_mode {
-            constants::HIRES_SCREEN_HEIGHT
-        } else {
-            constants::LORES_SCREEN_HEIGHT
-        }
     }
 
     ///
@@ -109,20 +95,70 @@ impl VideoMemory {
     ///
 
     pub fn scroll(&mut self, dir: ScrollDir, amount: usize) {
+        // let mut new_data = [[0; constants::HIRES_SCREEN_WIDTH]; constants::HIRES_SCREEN_HEIGHT];
         let mut new_data = self.data.clone();
+        let data_length = new_data.len();
 
-        for y in 0..self.get_screen_height() {
-            for x in 0..self.get_screen_width() {
-                new_data[y][x] = match dir {
+        let display_height = get_display_height(&self.instruction_set) as usize;
+        let display_width = get_display_width(&self.instruction_set) as usize;
+
+        // let mut collisions: u32 = 0;
+
+        // match dir {
+        //     ScrollDir::Down => {
+        //         let to_move = &mut new_data[0..data_length - amount];
+        //         let to_clip = &new_data[data_length - amount..];
+
+        //         for row in to_clip {
+        //             for p in row {
+        //                 if *p == 1 {
+        //                     collisions += 1;
+        //                 }
+        //             }
+        //         }
+
+        //         new_data[0..data_length - amount].swap_with_slice(to_move);
+
+        //         // let _ = replace(&mut new_data[0..self.data.len() - amount], to_move);
+        //         // new_data[0..self.data.len() - amount] = to_move;
+        //     }
+        //     _ => {}
+        // }
+
+        // down:
+        //  - get last `amount` rows
+        //  - check those rows for pixels and add 1 to the collisions counter
+        //  - get the first `len - amount` rows
+
+        // TODO: update the sprite positions as well (or tie this into sprites in general?)
+
+        for y in 0..display_height {
+            for x in 0..display_width {
+                let new_val = match dir {
                     ScrollDir::Down => self.data[y.saturating_sub(amount)][x],
-                    ScrollDir::Up => self.data[y.saturating_add(amount)][x],
+                    ScrollDir::Up => {
+                        self.data[if y + amount >= display_height {
+                            display_height - 1
+                        } else {
+                            y + amount
+                        }][x]
+                    }
                     ScrollDir::Right => self.data[y][x.saturating_sub(amount)],
-                    ScrollDir::Left => self.data[y][x.saturating_add(amount)],
+                    ScrollDir::Left => {
+                        self.data[y][if x + amount >= display_width {
+                            display_width - 1
+                        } else {
+                            x + amount
+                        }]
+                    }
                 };
+                new_data[y][x] = new_val;
             }
         }
 
-        self.data = new_data;
+        swap(&mut self.data, &mut new_data);
+
+        // collisions
     }
 
     ///
@@ -150,13 +186,27 @@ impl VideoMemory {
     }
 
     pub fn place_sprite(&mut self, key: &SpriteKey, x: usize, y: usize) {
+        let display_width = get_display_width(&self.instruction_set) as usize;
+        let display_height = get_display_height(&self.instruction_set) as usize;
+
+        let px = if x >= display_width {
+            x % display_width
+        } else {
+            x
+        };
+        let py = if y >= display_height {
+            y % display_height
+        } else {
+            y
+        };
+
         match self.get_sprite_mut(key) {
-            Some(sprite) => sprite.set_coords(x, y),
+            Some(sprite) => sprite.set_coords(px, py),
             _ => return,
         }
     }
 
-    pub fn draw_sprite(&mut self, key: &SpriteKey, _clipping: bool) -> u8 {
+    pub fn draw_sprite(&mut self, key: &SpriteKey) -> u8 {
         let mut collisions: u8 = 0;
 
         let sprite = match self.get_sprite(key) {
@@ -167,24 +217,10 @@ impl VideoMemory {
             }
         };
 
-        // TODO: what's the role of clipping again between CHIP-8 and SCHIP?
-
-        let pos_y = if sprite.get_y() > self.get_screen_height() {
-            sprite.get_y() % self.get_screen_height()
-        } else {
-            sprite.get_y()
-        };
-
-        let pos_x = if sprite.get_x() > self.get_screen_width() {
-            sprite.get_x() % self.get_screen_width()
-        } else {
-            sprite.get_x()
-        };
-
         for sy in 0..sprite.get_height() {
-            let vy = pos_y.saturating_add(sy as usize);
+            let vy = sprite.get_y().saturating_add(sy as usize);
             for sx in 0..sprite.get_width() {
-                let vx = pos_x.saturating_add(sx as usize);
+                let vx = sprite.get_x().saturating_add(sx as usize);
 
                 let pixel = read_bit_from_byte(
                     sprite.get_data()[sy as usize],

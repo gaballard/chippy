@@ -2,6 +2,7 @@
 
 | Version | Changes                                                                                    |
 | ------- | ------------------------------------------------------------------------------------------ |
+| `1.6.2` | Implemented SCHIP lores mode scrolling, updated array setters to use `mem::replace`        |
 | `1.6.1` | Fixes for keypress and scrolling commands, added changelog, split roadmap into its own doc |
 | `1.6.0` | SCHIP-1.x support (first draft)                                                            |
 | `1.5.0` | Settings.ini file                                                                          |

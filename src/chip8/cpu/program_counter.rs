@@ -1,3 +1,5 @@
+use std::mem::{replace, swap};
+
 use crate::constants;
 
 ///
@@ -18,16 +20,17 @@ impl ProgramCounter {
 
     #[inline]
     pub fn next(&mut self) {
-        self.address += constants::OPCODE_SIZE;
+        let mut next_addr = self.address.wrapping_add(constants::OPCODE_SIZE);
+        swap(&mut self.address, &mut next_addr);
     }
 
     #[inline]
     pub fn jump(&mut self, jump_addr: u16) {
-        self.address = jump_addr;
+        let _ = replace(&mut self.address, jump_addr);
     }
 
     #[inline]
     pub fn reset(&mut self) {
-        self.address = constants::PROGRAM_START_ADDR;
+        let _ = replace(&mut self.address, constants::PROGRAM_START_ADDR);
     }
 }

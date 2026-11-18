@@ -91,39 +91,33 @@ impl Keypad {
                 Event::KeyDown {
                     keycode: Some(Keycode::LeftBracket),
                     ..
-                } => return Actions::DecVideoScale,
+                } => return Actions::DecZoomLevel,
 
                 Event::KeyDown {
                     keycode: Some(Keycode::RightBracket),
                     ..
-                } => return Actions::IncVideoScale,
-
-                // Set hires mode
-                Event::KeyDown {
-                    keycode: Some(Keycode::H),
-                    ..
-                } => return Actions::ToggleHiresMode,
+                } => return Actions::IncZoomLevel,
 
                 // Scroll display
                 Event::KeyDown {
                     keycode: Some(Keycode::Down),
                     ..
-                } => return Actions::ScrollScreen(ScrollDir::Down, 1),
+                } => return Actions::ScrollScreen(ScrollDir::Down, 4),
 
                 Event::KeyDown {
                     keycode: Some(Keycode::Up),
                     ..
-                } => return Actions::ScrollScreen(ScrollDir::Up, 1),
+                } => return Actions::ScrollScreen(ScrollDir::Up, 4),
 
                 Event::KeyDown {
                     keycode: Some(Keycode::Right),
                     ..
-                } => return Actions::ScrollScreen(ScrollDir::Right, 1),
+                } => return Actions::ScrollScreen(ScrollDir::Right, 4),
 
                 Event::KeyDown {
                     keycode: Some(Keycode::Left),
                     ..
-                } => return Actions::ScrollScreen(ScrollDir::Left, 1),
+                } => return Actions::ScrollScreen(ScrollDir::Left, 4),
 
                 // Toggle CRT fade effect
                 Event::KeyDown {

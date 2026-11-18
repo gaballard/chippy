@@ -15,8 +15,9 @@ pub struct Settings {
     pub instruction_set: InstructionSet,
 
     // Display
-    pub video_scale: u32,
-    pub _display_refresh_rate_hz: u32,
+    pub zoom_level: u32,
+    pub hires_mode: bool,
+    pub display_refresh_rate_hz: u32,
     pub crt_fade_rate_slow: u32,
     pub crt_fade_rate_medium: u32,
     pub crt_fade_rate_fast: u32,
@@ -62,17 +63,23 @@ impl Settings {
             .section(Some("Display"))
             .expect("Settings.ini missing \"Display\" section");
 
-        let _display_refresh_rate_hz: u32 = display_section
+        let zoom_level: u32 = display_section
+            .get("zoom_level")
+            .expect("Settings.ini missing \"Display.zoom_level\"")
+            .parse()
+            .expect("Display.zoom_level should be a 32-bit integer");
+
+        let hires_mode: bool = display_section
+            .get("hires_mode")
+            .expect("Settings.ini missing \"Display.hires_mode\"")
+            .parse()
+            .expect("Display.hires_mode should be a boolean");
+
+        let display_refresh_rate_hz: u32 = display_section
             .get("display_refresh_rate_hz")
             .expect("Settings.ini missing \"Display.display_refresh_rate_hz\"")
             .parse()
             .expect("Display.display_refresh_rate_hz should be a 32-bit integer");
-
-        let video_scale: u32 = display_section
-            .get("video_scale")
-            .expect("Settings.ini missing \"Display.video_scale\"")
-            .parse()
-            .expect("Display.video_scale should be a 32-bit integer");
 
         let crt_fade_rate_slow: u32 = display_section
             .get("crt_fade_rate_slow")
@@ -165,8 +172,9 @@ impl Settings {
 
         Ok(Settings {
             instruction_set,
-            video_scale,
-            _display_refresh_rate_hz,
+            zoom_level,
+            hires_mode,
+            display_refresh_rate_hz,
             crt_fade_rate_slow,
             crt_fade_rate_medium,
             crt_fade_rate_fast,

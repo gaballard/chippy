@@ -12,10 +12,20 @@ pub const LARGE_FONT_START_ADDR: u16 = 0x50;
 pub const PROGRAM_START_ADDR: u16 = 0x200;
 
 // Display
+pub const MIN_ZOOM_LEVEL: u32 = 1;
+pub const MAX_ZOOM_LEVEL: u32 = 25;
+
+// SCHIP-1.x
 pub const HIRES_SCREEN_WIDTH: usize = 128;
 pub const HIRES_SCREEN_HEIGHT: usize = 64;
+
+// Original CHIP-8 variants
 pub const LORES_SCREEN_WIDTH: usize = 64;
 pub const LORES_SCREEN_HEIGHT: usize = 32;
+
+// CHIP-8 Two-page display (64x64 hires mode)
+pub const CHIP8_HIRES_SCREEN_WIDTH: usize = 64;
+pub const CHIP8_HIRES_SCREEN_HEIGHT: usize = 64;
 
 // Colors
 pub const FOREGROUND_COLOR_WHITE: Color = Color::RGB(215, 215, 215);

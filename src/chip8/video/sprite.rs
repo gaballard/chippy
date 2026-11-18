@@ -11,7 +11,7 @@ pub struct SpriteKey(pub u8, pub u8, pub u16, pub u16);
 ///
 /// CHIP-8 sprites are always eight pixels wide and between one to fifteen pixels high.
 ///
-/// SCHIP-1.x sprites are always sixteen pixels wide and sixteen pixels high.
+/// SCHIP-1.x sprites can be up to 16x16 in hires mode, and are always 8x16 in lores mode.
 ///
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Sprite {
