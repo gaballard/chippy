@@ -1,3 +1,5 @@
+use std::mem::replace;
+
 ///
 /// Stack
 ///
@@ -18,21 +20,23 @@ impl Stack {
 
     #[inline]
     pub fn push(&mut self, value: u16) {
-        self.pointer += 1;
-        self.data[self.pointer as usize] = value;
+        let new_pointer = self.pointer + 1;
+        let _ = replace(&mut self.pointer, new_pointer);
+        let _ = replace(&mut self.data[self.pointer as usize], value);
     }
 
     #[inline]
     pub fn pop(&mut self) -> u16 {
-        let addr = self.data[self.pointer as usize];
-        self.pointer -= 1;
+        let addr = replace(&mut self.data[self.pointer as usize], 0);
+        let new_pointer = self.pointer - 1;
+        let _ = replace(&mut self.pointer, new_pointer);
 
         addr
     }
 
     #[inline]
     pub fn clear(&mut self) {
-        self.data = [0; 16];
-        self.pointer = 0;
+        let _ = replace(&mut self.data, [0; 16]);
+        let _ = replace(&mut self.pointer, 0);
     }
 }

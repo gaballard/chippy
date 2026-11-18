@@ -4,7 +4,7 @@ pub enum InstructionSet {
     Chip8D6800,
     _Chip8E,
     _Chip8I,
-    Chip8III,
+    Chip8HiRes,
     _Chip8X,
     _Chip10,
     Chip48,
@@ -23,7 +23,7 @@ impl InstructionSet {
             "CHIP-8-D6800" => InstructionSet::Chip8D6800, // DREAM-6800
             "CHIP-8E" => InstructionSet::_Chip8E,
             "CHIP-8I" => InstructionSet::_Chip8I,
-            "CHIP-8III" => InstructionSet::Chip8III,
+            "CHIP-8-Hires" => InstructionSet::Chip8HiRes,
             "CHIP-8X" => InstructionSet::_Chip8X,
             "CHIP-10" => InstructionSet::_Chip10,
             "CHIP-48" => InstructionSet::Chip48, // HP-48 (1990)
@@ -43,7 +43,7 @@ impl InstructionSet {
             InstructionSet::Chip8D6800 => "CHIP-8-D6800",
             InstructionSet::_Chip8E => "CHIP-8E",
             InstructionSet::_Chip8I => "CHIP-8I",
-            InstructionSet::Chip8III => "CHIP-8III",
+            InstructionSet::Chip8HiRes => "CHIP-8-Hires",
             InstructionSet::_Chip8X => "CHIP-8X",
             InstructionSet::_Chip10 => "CHIP-10",
             InstructionSet::Chip48 => "CHIP-48",
@@ -77,6 +77,7 @@ impl InstructionSet {
             | InstructionSet::Chip8D6800
             | InstructionSet::_Chip8E
             | InstructionSet::_Chip8I
+            | InstructionSet::Chip8HiRes
             | InstructionSet::_Chip8X
             | InstructionSet::_Chip10
             | InstructionSet::Chip48 => true,

@@ -1,3 +1,5 @@
+use std::mem::replace;
+
 use crate::constants;
 
 ///
@@ -28,11 +30,11 @@ impl Memory {
 
     #[inline]
     pub fn write(&mut self, addr: u16, value: u8) {
-        self.data[addr as usize] = value;
+        let _ = replace(&mut self.data[addr as usize], value);
     }
 
     #[inline]
     pub fn clear(&mut self) {
-        self.data = [0; constants::SYSTEM_RAM as usize];
+        let _ = replace(&mut self.data, [0; constants::SYSTEM_RAM as usize]);
     }
 }

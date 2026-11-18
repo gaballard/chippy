@@ -1,5 +1,6 @@
 mod debug_panel;
 
+use std::mem::replace;
 use std::ops::Mul;
 
 use sdl2::pixels::Color;
@@ -107,19 +108,25 @@ impl<'a> Display<'a> {
             self.draw(cpu);
 
             if crt_fade {
-                self.fade_pixels(crt_fade_rate);
+                self.fade_pixels(cpu, crt_fade_rate);
             }
 
             self.canvas.present();
         }
     }
 
-    fn draw_pixel(&mut self, x: usize, y: usize, size: usize) -> Result<(), String> {
+    fn draw_pixel(&mut self, cpu: &Cpu, x: usize, y: usize, size: usize) -> Result<(), String> {
+        let multiplier = if cpu.instruction_set.is_schip() && !cpu.vram.hires_mode {
+            2
+        } else {
+            1
+        } as usize;
+
         self.canvas.fill_rect(Rect::new(
-            (x * self.zoom_level as usize) as i32,
-            (y * self.zoom_level as usize) as i32,
-            (size * self.zoom_level as usize) as u32,
-            (size * self.zoom_level as usize) as u32,
+            (x * self.zoom_level as usize * multiplier) as i32,
+            (y * self.zoom_level as usize * multiplier) as i32,
+            (size * self.zoom_level as usize * multiplier) as u32,
+            (size * self.zoom_level as usize * multiplier) as u32,
         ))
     }
 
@@ -133,23 +140,13 @@ impl<'a> Display<'a> {
                     self.background_color
                 });
 
-                if cpu.instruction_set.is_schip() {
-                    if cpu.vram.hires_mode {
-                        self.draw_pixel(x, y, 1)
-                            .expect(format!("Failed to draw pixel at {},{}", x, y).as_str());
-                    } else {
-                        self.draw_pixel(x * 2, y * 2, 2)
-                            .expect(format!("Failed to draw pixel at {},{}", x, y).as_str());
-                    }
-                } else {
-                    self.draw_pixel(x, y, 1)
-                        .expect(format!("Failed to draw pixel at {},{}", x, y).as_str());
-                }
+                self.draw_pixel(cpu, x, y, 1)
+                    .expect(format!("Failed to draw pixel at {},{}", x, y).as_str());
             }
         }
     }
 
-    fn fade_pixels(&mut self, crt_fade_rate: u8) -> usize {
+    fn fade_pixels(&mut self, cpu: &Cpu, crt_fade_rate: u8) -> usize {
         let mut to_retain: Vec<bool> = Vec::new();
 
         for i in 0..self.fading_pixels.len() {
@@ -162,20 +159,17 @@ impl<'a> Display<'a> {
             draw_color.b = (draw_color.b as f32).mul(fade_mult) as u8;
 
             self.canvas.set_draw_color(
-                if draw_color.r < 40 && draw_color.g < 40 && draw_color.b < 40 {
+                if draw_color.r <= crt_fade_rate
+                    && draw_color.g <= crt_fade_rate
+                    && draw_color.b <= crt_fade_rate
+                {
                     self.background_color
                 } else {
                     draw_color
                 },
             );
 
-            self.canvas
-                .fill_rect(Rect::new(
-                    (pixel.0 * self.zoom_level as usize) as i32,
-                    (pixel.1 * self.zoom_level as usize) as i32,
-                    self.zoom_level as u32,
-                    self.zoom_level as u32,
-                ))
+            self.draw_pixel(cpu, pixel.0, pixel.1, 1)
                 .expect(format!("Failed to fade pixel at {},{}", pixel.0, pixel.1).as_str());
 
             pixel.2 = pixel.2.checked_sub(crt_fade_rate).unwrap_or(0);
@@ -184,7 +178,7 @@ impl<'a> Display<'a> {
                 to_retain.push(false);
             } else {
                 to_retain.push(true);
-                self.fading_pixels[i] = pixel;
+                let _ = replace(&mut self.fading_pixels[i], pixel);
             }
         }
 

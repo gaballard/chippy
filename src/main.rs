@@ -9,7 +9,7 @@ use env_logger;
 use log::debug;
 
 use platform::Platform;
-use std::{env, time::Duration};
+use std::env;
 
 use crate::chippy::*;
 
@@ -60,7 +60,6 @@ fn main() {
             Actions::ToggleDebugPanel => Actions::handle_toggle_debug_panel_action(&mut chippy),
             Actions::CycleColorPalette => Actions::handle_cycle_color_palette_action(&mut chippy),
             Actions::ToggleCrtFade => Actions::handle_toggle_crt_fade_action(&mut chippy),
-            Actions::ToggleHiresMode => Actions::handle_toggle_hires_mode(&mut chippy),
             Actions::SetCrtFadeSpeed(fade_rate) => {
                 Actions::handle_set_crt_fade_rate_action(&mut chippy, fade_rate)
             }
@@ -80,11 +79,32 @@ fn main() {
             debug!("Executing frame {}...", chippy.devices.cpu.cycle);
         }
 
+        let old_hires_mode = chippy.devices.cpu.vram.hires_mode;
+
         // Execute cycle
         chippy.devices.cpu.tick();
 
         if chippy.settings.instruction_set.is_schip() && chippy.devices.cpu.quit_flag {
             break 'emulate;
+        }
+
+        // SCHIP-1.x defines clock speed changes on lo/hi res modes
+        if chippy.settings.instruction_set.is_schip()
+            && chippy.devices.cpu.vram.hires_mode != old_hires_mode
+        {
+            let clock_speed = if chippy.settings.instruction_set.is_schip() {
+                if chippy.devices.cpu.vram.hires_mode {
+                    chippy.settings.schip_hires_clock_speed_hz
+                } else {
+                    chippy.settings.schip_lores_clock_speed_hz
+                }
+            } else {
+                chippy.settings.default_clock_speed_hz
+            };
+            if clock_speed != chippy.state.clock_speed {
+                debug!("Setting clock speed to: {} hz", clock_speed);
+                chippy.state.set_clock_speed(clock_speed);
+            }
         }
 
         chippy.play_audio();

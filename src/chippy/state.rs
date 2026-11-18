@@ -26,7 +26,11 @@ pub struct State {
 impl State {
     pub fn new(settings: &Settings) -> Self {
         let clock_speed = if settings.instruction_set.is_schip() {
-            settings.schip_hires_clock_speed_hz
+            if settings.hires_mode {
+                settings.schip_hires_clock_speed_hz
+            } else {
+                settings.schip_lores_clock_speed_hz
+            }
         } else {
             settings.default_clock_speed_hz
         };

@@ -1,3 +1,5 @@
+use std::mem::replace;
+
 ///
 /// Input Buffer
 ///
@@ -26,11 +28,11 @@ impl InputBuffer {
 
     #[inline]
     pub fn _set(&mut self, key: usize, is_pressed: bool) {
-        self.buffer[key] = is_pressed;
+        let _ = replace(&mut self.buffer[key], is_pressed);
     }
 
     #[inline]
     pub fn clear(&mut self) {
-        self.buffer = [false; 16];
+        let _ = replace(&mut self.buffer, [false; 16]);
     }
 }

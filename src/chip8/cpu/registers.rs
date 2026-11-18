@@ -1,3 +1,5 @@
+use std::mem::replace;
+
 ///
 /// Registers
 ///
@@ -19,11 +21,11 @@ impl Registers {
 
     #[inline]
     pub fn write(&mut self, register: u8, value: u8) {
-        self.data[register as usize] = value;
+        let _ = replace(&mut self.data[register as usize], value);
     }
 
     #[inline]
     pub fn clear(&mut self) {
-        self.data = [0; 16];
+        let _ = replace(&mut self.data, [0; 16]);
     }
 }
